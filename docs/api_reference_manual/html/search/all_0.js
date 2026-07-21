@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['arg_5fcount_0',['arg_count',['../structcy__command__console__cmd__t.html#a11c0789b7eff9572657e25711d15ef87',1,'cy_command_console_cmd_t']]]
+  ['1_3a_20addition_20and_20deletion_20of_20commands_0',['Code Snippet 1: Addition and deletion of commands',['../index.html#snip1',1,'']]]
 ];

@@ -25,14 +25,13 @@
 var NAVTREE =
 [
   [ "Command Console Library", "index.html", [
-    [ "Overview", "index.html", null ],
-    [ "API Reference", "modules.html", "modules" ]
+    [ "Overview", "index.html", null ]
   ] ]
 ];
 
 var NAVTREEINDEX =
 [
-"group__generic__cmd__console__defines.html"
+"index.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

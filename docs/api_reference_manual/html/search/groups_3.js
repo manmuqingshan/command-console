@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['macros_0',['Macros',['../group__group__cmd__console__macros.html',1,'']]]
+  ['library_20results_20error_20codes_0',['Command Console library results/error codes',['../group__generic__cmd__console__defines.html',1,'']]]
 ];

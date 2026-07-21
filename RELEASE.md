@@ -13,6 +13,10 @@ See the [README.md](./README.md) for a complete description of the command conso
 
 ## Changelog
 
+### v6.5.0
+- Enabled WebSocket utility support for PSOC&trade; Edge E84 (PSE84) and CYW955913EVK-01 platform.
+- Documentation updates.
+
 ### v6.4.0
 - Enabled WPA3-192bit enterprise support for PSOC&trade; Edge E84 (PSE84) platform.
 

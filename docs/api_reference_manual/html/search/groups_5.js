@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['typedefs_0',['Typedefs',['../group__group__cmd__console__typedefs.html',1,'']]]
+  ['results_20error_20codes_0',['Command Console library results/error codes',['../group__generic__cmd__console__defines.html',1,'']]]
 ];

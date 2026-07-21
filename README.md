@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This library provides a framework to add command console support to your application. Support for Wi-Fi, Ethernet, iPerf, and Bluetooth Low Energy commands are bundled with this library.
+This library provides a framework to add command console support to your application. Support for Wi-Fi, Ethernet, iPerf, Bluetooth Low Energy, and WebSocket commands are bundled with this library.
 
 [ModusToolbox&trade; AnyCloud Tester - Wi-Fi Bluetooth&reg; Console](https://github.com/Infineon/mtb-anycloud-wifi-bluetooth-tester) application is built over this library for Wi-Fi kits.
 
@@ -19,6 +19,10 @@ This library provides a framework to add command console support to your applica
 - Supports TCP client/server and UDP client/server on IPv4. Supports a single instance of the iPerf client and server. IPv6 support will be added in the future.
 
 - Supports Bluetooth&reg; LE commands including Tx/Rx for measuring Bluetooth&reg; LE throughput
+
+- Supports WebSocket commands for client and server operations including secure (WSS/TLS) connections. Requires the [websocket](https://github.com/Infineon/websocket) middleware library.
+
+  **Note:** For WebSocket TLS (WSS) support, the application must provide valid certificates and keys. See the [WebSocket commands](#websocket-commands) section.
 
 ## Supported platforms
 
@@ -68,6 +72,7 @@ This section provides the list of dependent libraries required for this middlewa
 
 - [BT stack Integration](https://github.com/Infineon/btstack-integration)
 
+- [WebSocket](https://github.com/Infineon/websocket) (required for WebSocket utility commands)
 
 ## Quick start
 
@@ -97,6 +102,19 @@ This library is supported on ModusToolbox&trade; frameworks. See the following s
        `https://github.com/Infineon/btstack-integration#latest-v6.X#$$ASSET_REPO$$/btstack-integration/latest-v6.X`
 
    **Note:** BT stack Integration should not be included for CYW955913EVK-01.
+
+4. For WebSocket support, pull the [websocket](https://github.com/Infineon/websocket) library by creating the following *.mtb* file in the deps folder:
+     - *websocket.mtb:*
+       `https://github.com/Infineon/websocket#latest-v1.X#$$ASSET_REPO$$/websocket/latest-v1.X`
+
+   **Note:** For WebSocket TLS (WSS) support, copy the `websocket_certificates.h` template file from the command-console library's `source/websocket_utility/` folder (or from the application's test folder) into your application's source directory. Update the file with valid PEM-encoded certificates and keys:
+     - `WS_ROOT_CA_CERTIFICATE` – Root CA certificate
+     - `WS_CLIENT_CERTIFICATE` – Client certificate (for mutual TLS)
+     - `WS_CLIENT_PRIVATE_KEY` – Client private key (for mutual TLS)
+     - `WS_SERVER_CERTIFICATE` – Server certificate (for WSS server)
+     - `WS_SERVER_PRIVATE_KEY` – Server private key (for WSS server)
+
+   Ensure the header file is in the application include path so that the websocket utility can find it during compilation.
 
 4. Review and make the required changes to the pre-defined configuration files and Makefile COMPONENTS in the application.
 
@@ -144,7 +162,7 @@ This library is supported on ModusToolbox&trade; frameworks. See the following s
 
 ## Commands supported
 
-This section lists the Wi-Fi and Bluetooth&reg; LE commands that are natively supported by the command console library.
+This section lists the Wi-Fi, Bluetooth&reg; LE, and WebSocket commands that are natively supported by the command console library.
 
 ### Wi-Fi commands
 
@@ -339,6 +357,146 @@ The TCP window size is configured with a default optimal value in the Wi-Fi Blue
 The iPerf command given in the [iPerf commands for Wi-Fi throughput measurement](#iperf-commands-for-wi-fi-throughput-measurement) section of this document is an ideal command for UDP throughput measurement on PSoC&trade; 6 2M devices. If you are using a different PSoC&trade; device, try different bandwidth values for the _iperf_ `-b` option to measure the UDP throughput.
 
 For example, when you run the command `iperf -c 192.168.0.100 -t 60 -u -b 50M` to measure the UDP Tx throughput on the device, if you see the resulting throughput closer to 50 Mbps, you should run the same command again with the `-b 60M` option and measure the throughput again. If the resulting throughput is different (56 Mbps, which is lesser than 60M, for example), the max UDP Tx throughput supported by the device is 56 Mbps. On the contrary, if the resulting throughput is 27 Mbps with the `-b 50M` option, you should run the same command again with the `-b 30M` option and measure the throughput again. If the resulting throughput in this case is 28 Mbps, this is the max UDP Tx throughput supported by the PSoC&trade; device. Use this as a guideline to identify the real max UDP throughput supported by your device.
+
+### WebSocket commands
+
+The WebSocket utility provides a unified `ws` command to exercise the [websocket](https://github.com/Infineon/websocket) middleware library interactively from a serial terminal. Both client and server roles are supported, including secure (WSS/TLS) connections.
+
+**Prerequisites:**
+- The device must be connected to a Wi-Fi network before using WebSocket commands.
+- For TLS (WSS) connections, valid certificates and keys must be configured in `websocket_certificates.h`. Copy this file from the library's `source/websocket_utility/` directory (or from the application template) into your application source and populate it with your PEM-encoded certificates before building.
+- Add the [websocket](https://github.com/Infineon/websocket) library to your project's deps folder.
+- The TLS 1.3 handshake (mbedtls RSA operations) requires more stack than the default console thread provides. The default 6 KB is insufficient for WSS connections and will cause a stack overflow. Increase the console thread stack size in your application Makefile:
+  ```
+  DEFINES+=CONSOLE_THREAD_STACK_SIZE=(12*1024)
+  ```
+**Note:** The architecture only supports one client and one server simultaneously.
+
+#### *Command options*
+
+| Option | Long form | Description |
+|--------|-----------|-------------|
+| `-c` | `--client` | Client mode |
+| `-s` | `--server` | Server mode |
+| `-p` | `--port` | Port number |
+| `-t` | `--type` | Message type (text/binary/ping) |
+| `-m` | `--message` | Message content |
+| `-cid` | `--clientid` | Connected client ID (server mode) |
+| `tls` | | Enable TLS/WSS (positional flag) |
+
+#### *WebSocket client commands*
+
+1. Connect to a WebSocket server (without TLS):
+   ```
+   > ws -c connect <host> -p <port>
+   ```
+   Sample command:
+   ```
+   > ws -c connect 192.168.31.37 -p 50007
+   ```
+
+2. Connect to a WebSocket server (with TLS):
+   ```
+   > ws -c connect <host> -p <port> tls
+   ```
+   Sample command:
+   ```
+   > ws -c connect 192.168.31.37 -p 50007 tls
+   ```
+
+3. Send a text message:
+   ```
+   > ws -c send -t text -m <message>
+   ```
+   Sample command:
+   ```
+   > ws -c send -t text -m "Hi from client"
+   ```
+
+4. Send a binary frame (payload as hex string):
+   ```
+   > ws -c send -t binary -m <hex_string>
+   ```
+   Sample command:
+   ```
+   > ws -c send -t binary -m 48656c6c6f
+   ```
+
+5. Send a ping frame:
+   ```
+   > ws -c send -t ping -m optional_payload
+   ```
+
+6. Disconnect from the server:
+   ```
+   > ws -c disconnect
+   ```
+
+#### *WebSocket server commands*
+
+1. Start the server (without TLS):
+   ```
+   > ws -s start -p <port>
+   ```
+   Sample command:
+   ```
+   > ws -s start -p 50007
+   ```
+
+2. Start the server (with TLS):
+   ```
+   > ws -s start -p <port> tls
+   ```
+   Sample command:
+   ```
+   > ws -s start -p 50007 tls
+   ```
+
+3. Send a message to a specific client:
+   ```
+   > ws -s send -cid <client_id> -t <text|binary> -m <message>
+   ```
+   Sample command:
+   ```
+   > ws -s send -cid 0 -t text -m "Hi from server"
+   ```
+
+4. Stop the server:
+   ```
+   > ws -s stop
+   ```
+
+#### *Sample WebSocket client session (Non-TLS)*
+
+```
+> ws -c connect 192.168.31.37 -p 50007
+> ws -c send -t text -m "Hi from client"
+> ws -c disconnect
+```
+
+#### *Sample WebSocket client session (TLS)*
+
+```
+> ws -c connect 192.168.31.37 -p 50007 tls
+> ws -c send -t text -m "Hi from client"
+> ws -c disconnect
+```
+
+#### *Sample WebSocket server session (Non-TLS)*
+
+```
+> ws -s start -p 50007
+> ws -s send -cid 0 -t text -m "Hi from server"
+> ws -s stop
+```
+
+#### *Sample WebSocket server session (TLS)*
+
+```
+> ws -s start -p 50007 tls
+> ws -s send -cid 0 -t text -m "Hi from server"
+> ws -s stop
+```
 
 ### Ethernet commands
 
@@ -569,7 +727,7 @@ The theoretical Bluetooth&reg; LE throughput achievable for  these default value
 
 **ModusToolbox&trade;:**
 
-   By default, `Wifi`, `Ethernet`, `bluetooth` and `iperf` utilities are enabled. To disable any of these utilities add the following to the Makefile of the application.
+   By default, `Wifi`, `Ethernet`, `bluetooth`, `iperf`, and `websocket` utilities are enabled. To disable any of these utilities add the following to the Makefile of the application.
 
    To disable Wi-Fi commands:
    ```
@@ -586,6 +744,15 @@ The theoretical Bluetooth&reg; LE throughput achievable for  these default value
    To disable bluetooth commands:
    ```
    DEFINES+=DISABLE_COMMAND_CONSOLE_BT
+   ```
+   To disable WebSocket commands:
+   ```
+   DEFINES+=DISABLE_COMMAND_CONSOLE_WEBSOCKET
+   ```
+
+   **Note:** When using only the WebSocket utility, disable unused utilities to reduce code size. For example:
+   ```
+   DEFINES+=DISABLE_COMMAND_CONSOLE_WIFI DISABLE_COMMAND_CONSOLE_BT DISABLE_COMMAND_CONSOLE_IPERF DISABLE_COMMAND_CONSOLE_ETH
    ```
 
 ## Additional information
